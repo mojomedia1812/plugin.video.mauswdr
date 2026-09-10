@@ -15,19 +15,45 @@ ADDON_NAME = "MausWDR"
 ADDON = xbmcaddon.Addon()
 
 
+def make_list_item(label="", path=None):
+    kwargs = {"label": label, "offscreen": True}
+    if path is not None:
+        kwargs["path"] = path
+    try:
+        return xbmcgui.ListItem(**kwargs)
+    except TypeError:
+        if path is None:
+            return xbmcgui.ListItem(label=label)
+        return xbmcgui.ListItem(label=label, path=path)
+
+
 def build_url(params):
     return PLUGIN_URL + "?" + urllib.parse.urlencode(params)
 
 
-def add_directory(label, params):
-    item = xbmcgui.ListItem(label=label)
+def add_items(items):
+    if not items:
+        return
+    add_many = getattr(xbmcplugin, "addDirectoryItems", None)
+    if add_many:
+        add_many(ADDON_HANDLE, items, len(items))
+        return
+    for url, item, is_folder in items:
+        xbmcplugin.addDirectoryItem(ADDON_HANDLE, url, item, isFolder=is_folder)
+
+
+def make_directory_item(label, params):
+    item = make_list_item(label=label)
     item.setArt({"icon": "DefaultFolder.png"})
-    xbmcplugin.addDirectoryItem(
-        ADDON_HANDLE,
+    return (
         build_url(params),
         item,
-        isFolder=True,
+        True,
     )
+
+
+def add_directory(label, params):
+    add_items([make_directory_item(label, params)])
 
 
 def video_art(video):
@@ -36,9 +62,7 @@ def video_art(video):
         return {"icon": "DefaultVideo.png"}
     return {
         "thumb": thumb,
-        "icon": thumb,
-        "poster": thumb,
-        "fanart": thumb,
+        "icon": "DefaultVideo.png",
     }
 
 
@@ -48,9 +72,9 @@ def set_video_art(item, video):
         item.setProperty("fanart_image", video["thumb"])
 
 
-def add_video(video):
+def make_video_item(video):
     label = video.get("label") or video["title"]
-    item = xbmcgui.ListItem(label=label)
+    item = make_list_item(label=label)
     item.setProperty("IsPlayable", "true")
     info = {
         "title": video["title"],
@@ -62,12 +86,15 @@ def add_video(video):
     item.setInfo("video", info)
     set_video_art(item, video)
 
-    xbmcplugin.addDirectoryItem(
-        ADDON_HANDLE,
+    return (
         build_url({"mode": "play", "url": video["url"]}),
         item,
-        isFolder=False,
+        False,
     )
+
+
+def add_video(video):
+    add_items([make_video_item(video)])
 
 
 def finish_directory(content="videos", succeeded=True):
@@ -86,9 +113,12 @@ def show_error(message):
 
 
 def list_root():
-    for section in wdrmaus.get_sections():
-        add_directory(section["label"], {"mode": "section", "section": section["id"]})
-    add_directory("Nach Jahren", {"mode": "years"})
+    items = [
+        make_directory_item(section["label"], {"mode": "section", "section": section["id"]})
+        for section in wdrmaus.get_sections()
+    ]
+    items.append(make_directory_item("Nach Jahren", {"mode": "years"}))
+    add_items(items)
     finish_directory(content="files")
 
 
@@ -101,11 +131,15 @@ def list_section(section_id):
         finish_directory(succeeded=False)
         return
 
-    for item in menu_items:
-        add_directory(
-            item["label"],
-            {"mode": "list", "section": section_id, "filter": item["filter"]},
-        )
+    add_items(
+        [
+            make_directory_item(
+                item["label"],
+                {"mode": "list", "section": section_id, "filter": item["filter"]},
+            )
+            for item in menu_items
+        ]
+    )
     finish_directory(content="files")
 
 
@@ -118,8 +152,7 @@ def list_videos(section_id="sachgeschichten", filter_value="alle", query=None):
         finish_directory(succeeded=False)
         return
 
-    for video in videos:
-        add_video(video)
+    add_items([make_video_item(video) for video in videos])
 
     xbmcplugin.addSortMethod(ADDON_HANDLE, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     finish_directory(content="videos")
@@ -149,11 +182,15 @@ def list_years():
         finish_directory(succeeded=False)
         return
 
-    for year in years:
-        add_directory(
-            "{} ({})".format(year["year"], year["count"]),
-            {"mode": "year", "year": year["year"]},
-        )
+    add_items(
+        [
+            make_directory_item(
+                "{} ({})".format(year["year"], year["count"]),
+                {"mode": "year", "year": year["year"]},
+            )
+            for year in years
+        ]
+    )
     finish_directory(content="files")
 
 
@@ -166,8 +203,7 @@ def list_year(year):
         finish_directory(succeeded=False)
         return
 
-    for video in videos:
-        add_video(video)
+    add_items([make_video_item(video) for video in videos])
 
     xbmcplugin.addSortMethod(ADDON_HANDLE, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     finish_directory(content="videos")
@@ -179,10 +215,10 @@ def play(url):
     except Exception as exc:
         show_error("Video konnte nicht gestartet werden")
         wdrmaus.log_debug("Playback error: {}".format(exc))
-        xbmcplugin.setResolvedUrl(ADDON_HANDLE, False, xbmcgui.ListItem())
+        xbmcplugin.setResolvedUrl(ADDON_HANDLE, False, make_list_item())
         return
 
-    item = xbmcgui.ListItem(label=stream.get("title", ADDON_NAME), path=stream["url"])
+    item = make_list_item(label=stream.get("title", ADDON_NAME), path=stream["url"])
     item.setProperty("IsPlayable", "true")
     item.setMimeType("application/vnd.apple.mpegurl")
     item.setContentLookup(False)
