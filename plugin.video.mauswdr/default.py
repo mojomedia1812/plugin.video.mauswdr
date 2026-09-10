@@ -30,6 +30,24 @@ def add_directory(label, params):
     )
 
 
+def video_art(video):
+    thumb = video.get("thumb", "")
+    if not thumb:
+        return {"icon": "DefaultVideo.png"}
+    return {
+        "thumb": thumb,
+        "icon": thumb,
+        "poster": thumb,
+        "fanart": thumb,
+    }
+
+
+def set_video_art(item, video):
+    item.setArt(video_art(video))
+    if video.get("thumb"):
+        item.setProperty("fanart_image", video["thumb"])
+
+
 def add_video(video):
     label = video.get("label") or video["title"]
     item = xbmcgui.ListItem(label=label)
@@ -42,12 +60,7 @@ def add_video(video):
     if video.get("year"):
         info["year"] = int(video["year"])
     item.setInfo("video", info)
-    art = {}
-    if video.get("thumb"):
-        art["thumb"] = video["thumb"]
-        art["icon"] = video["thumb"]
-    if art:
-        item.setArt(art)
+    set_video_art(item, video)
 
     xbmcplugin.addDirectoryItem(
         ADDON_HANDLE,
@@ -181,8 +194,7 @@ def play(url):
             "mediatype": "video",
         },
     )
-    if stream.get("thumb"):
-        item.setArt({"thumb": stream["thumb"], "icon": stream["thumb"]})
+    set_video_art(item, stream)
 
     xbmcplugin.setResolvedUrl(ADDON_HANDLE, True, item)
 
