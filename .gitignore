@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.zip
+.pytest_cache/
+.mypy_cache/
+.coverage
+.test-cache/
+.firetv-cache/
+.kodi-backup/
+.firetv-*.db
