@@ -15,7 +15,7 @@ YEARS_CACHE_VERSION = 2
 CACHE_DIR = ""
 
 REQUEST_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Kodi; plugin.video.mauswdr/2026.09.11.1)",
+    "User-Agent": "Mozilla/5.0 (Kodi; plugin.video.mauswdr/2026.09.11.2)",
     "Accept": "text/html,application/json,application/javascript,*/*;q=0.8",
     "Accept-Language": "de-DE,de;q=0.9,en;q=0.5",
 }

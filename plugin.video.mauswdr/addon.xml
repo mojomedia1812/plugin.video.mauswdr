@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.mauswdr" name="MausWDR" version="2026.09.11.1" provider-name="m0j01812">
+<addon id="plugin.video.mauswdr" name="MausWDR" version="2026.09.11.2" provider-name="m0j01812">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
     </requires>
@@ -18,10 +18,9 @@
         <license>MIT</license>
         <website>https://www.wdrmaus.de/</website>
         <source>https://github.com/mojomedia1812/plugin.video.mauswdr</source>
-        <news>2026.09.11.1 (2026-09-11)
-- Addon-Metadaten vervollstaendigt
-- Entwicklerangabe auf m0j01812 gesetzt
-- Fanart-Asset ergaenzt</news>
+        <news>2026.09.11.2 (2026-09-11)
+- Automatische Updatepruefung beim Oeffnen des Addons ergaenzt
+- Neuere GitHub-Release-ZIPs werden validiert, installiert und Kodi zur Addon-Neuerkennung angestossen</news>
         <assets>
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>

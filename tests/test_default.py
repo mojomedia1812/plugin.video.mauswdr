@@ -13,11 +13,15 @@ def load_default_module():
     sys.path.insert(0, str(ADDON_DIR))
     sys.argv = ["plugin://plugin.video.mauswdr", "1", ""]
 
+    xbmc = types.ModuleType("xbmc")
+    xbmc.executebuiltin = lambda command: None
+
     xbmcaddon = types.ModuleType("xbmcaddon")
     xbmcaddon.Addon = lambda: types.SimpleNamespace(getAddonInfo=lambda key: "")
 
     xbmcgui = types.ModuleType("xbmcgui")
     xbmcgui.NOTIFICATION_ERROR = "error"
+    xbmcgui.NOTIFICATION_INFO = "info"
 
     class StubListItem:
         created = []
@@ -35,6 +39,7 @@ def load_default_module():
             self.properties[key] = value
 
     xbmcgui.ListItem = StubListItem
+    xbmcgui.Dialog = lambda: types.SimpleNamespace(notification=lambda *args, **kwargs: None)
 
     xbmcplugin = types.ModuleType("xbmcplugin")
     xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE = 0
@@ -44,6 +49,7 @@ def load_default_module():
 
     sys.modules.update(
         {
+            "xbmc": xbmc,
             "xbmcaddon": xbmcaddon,
             "xbmcgui": xbmcgui,
             "xbmcplugin": xbmcplugin,
@@ -116,6 +122,33 @@ class DefaultArtTests(unittest.TestCase):
         self.default.add_items(items)
 
         self.assertEqual(calls, [(1, items, 2)])
+
+    def test_check_for_updates_scans_local_addons_after_install(self):
+        calls = []
+        original_check = self.default.updater.check_and_install
+        original_builtin = self.default.xbmc.executebuiltin
+        original_addon = self.default.ADDON
+        try:
+            self.default.ADDON = types.SimpleNamespace(
+                getAddonInfo=lambda key: {
+                    "version": "2026.09.11.1",
+                    "path": "addon-path",
+                    "profile": "profile-path",
+                }[key]
+            )
+            self.default.updater.check_and_install = lambda *args, **kwargs: {
+                "status": "installed",
+                "latest_version": "2026.09.11.2",
+            }
+            self.default.xbmc.executebuiltin = calls.append
+
+            self.default.check_for_updates()
+
+            self.assertEqual(calls, ["UpdateLocalAddons"])
+        finally:
+            self.default.updater.check_and_install = original_check
+            self.default.xbmc.executebuiltin = original_builtin
+            self.default.ADDON = original_addon
 
 
 if __name__ == "__main__":

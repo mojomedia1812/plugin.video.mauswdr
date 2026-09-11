@@ -1,11 +1,13 @@
 import sys
 import urllib.parse
 
+import xbmc
 import xbmcaddon
 import xbmcgui
 import xbmcplugin
 import xbmcvfs
 
+from resources.lib import updater
 from resources.lib import wdrmaus
 
 
@@ -110,6 +112,34 @@ def show_error(message):
         xbmcgui.NOTIFICATION_ERROR,
         7000,
     )
+
+
+def show_info(message):
+    xbmcgui.Dialog().notification(
+        ADDON_NAME,
+        message,
+        getattr(xbmcgui, "NOTIFICATION_INFO", ""),
+        7000,
+    )
+
+
+def check_for_updates():
+    try:
+        result = updater.check_and_install(
+            ADDON.getAddonInfo("version"),
+            xbmcvfs.translatePath(ADDON.getAddonInfo("path")),
+            xbmcvfs.translatePath(ADDON.getAddonInfo("profile")),
+        )
+    except Exception as exc:
+        wdrmaus.log_debug("Update check failed: {}".format(exc))
+        return
+
+    if result.get("status") == "installed":
+        try:
+            xbmc.executebuiltin("UpdateLocalAddons")
+        except Exception as exc:
+            wdrmaus.log_debug("Could not scan local add-ons after update: {}".format(exc))
+        show_info("Update {} installiert. Kodi bitte neu starten.".format(result["latest_version"]))
 
 
 def list_root():
@@ -239,6 +269,9 @@ def main():
     wdrmaus.set_cache_dir(xbmcvfs.translatePath(ADDON.getAddonInfo("profile")))
     params = dict(urllib.parse.parse_qsl(sys.argv[2][1:], keep_blank_values=True))
     mode = params.get("mode", "root")
+
+    if mode == "root":
+        check_for_updates()
 
     if mode == "list":
         list_videos(
