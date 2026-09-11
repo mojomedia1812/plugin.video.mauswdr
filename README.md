@@ -2,6 +2,8 @@
 
 Kodi-Addon fuer Videos auf wdrmaus.de.
 
+Entwickler: m0j01812
+
 ## Funktionen
 
 - listet Sachgeschichten, Lachgeschichten, Mausspots und Lieder
@@ -9,6 +11,7 @@ Kodi-Addon fuer Videos auf wdrmaus.de.
 - bietet eine Jahresansicht ueber alle vier Bereiche
 - loest pro Detailseite den WDR-On-Demand-JSONP-Endpunkt auf
 - spielt den HLS-Stream in Kodi ab
+- enthaelt Icon, Fanart, mehrsprachige Addon-Beschreibung und Disclaimer
 
 ## Installation
 
