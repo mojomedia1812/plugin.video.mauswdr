@@ -138,7 +138,7 @@ class DefaultArtTests(unittest.TestCase):
             )
             self.default.updater.check_and_install = lambda *args, **kwargs: {
                 "status": "installed",
-                "latest_version": "2026.09.11.2",
+                "latest_version": "2026.09.11.3",
             }
             self.default.xbmc.executebuiltin = calls.append
 

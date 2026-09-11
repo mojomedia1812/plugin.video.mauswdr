@@ -12,7 +12,7 @@ Entwickler: m0j01812
 - loest pro Detailseite den WDR-On-Demand-JSONP-Endpunkt auf
 - spielt den HLS-Stream in Kodi ab
 - enthaelt Icon, Fanart, mehrsprachige Addon-Beschreibung und Disclaimer
-- prueft beim Oeffnen auf neuere GitHub-Releases und installiert passende Update-ZIPs automatisch
+- prueft bei jedem Oeffnen der Addon-Startseite auf neuere GitHub-Releases und installiert passende Update-ZIPs automatisch
 
 ## Installation
 

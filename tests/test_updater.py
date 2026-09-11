@@ -66,15 +66,28 @@ class UpdaterTests(unittest.TestCase):
 
         self.assertIsNone(updater.find_release_asset(bad_release))
 
-    def test_state_can_skip_recent_check_for_same_version(self):
-        with tempfile.TemporaryDirectory() as profile_dir:
+    def test_existing_state_does_not_skip_release_check(self):
+        with tempfile.TemporaryDirectory() as root_dir:
+            addon_dir = os.path.join(root_dir, "plugin.video.mauswdr")
+            profile_dir = os.path.join(root_dir, "profile")
+            os.makedirs(addon_dir)
+            os.makedirs(profile_dir)
             updater.write_state(
                 profile_dir,
-                {"last_check": 1000, "current_version": "2026.09.11.2"},
+                {"current_version": "2026.09.11.2"},
             )
 
-            self.assertTrue(updater.should_skip_check(profile_dir, "2026.09.11.2", 1001))
-            self.assertFalse(updater.should_skip_check(profile_dir, "2026.09.11.1", 1001))
+            calls = []
+            original_fetch_json = updater.fetch_json
+            try:
+                updater.fetch_json = lambda url: calls.append(url) or [release("2026.09.11.2")]
+
+                result = updater.check_and_install("2026.09.11.2", addon_dir, profile_dir)
+
+                self.assertEqual(calls, [updater.RELEASES_API_URL])
+                self.assertEqual(result["status"], "current")
+            finally:
+                updater.fetch_json = original_fetch_json
 
     def test_install_zip_validates_and_extracts_package(self):
         with tempfile.TemporaryDirectory() as root_dir:
@@ -123,12 +136,12 @@ class UpdaterTests(unittest.TestCase):
             write_package(os.path.join(root_dir, "seed.zip"), "2026.09.11.1")
             updater.install_zip(os.path.join(root_dir, "seed.zip"), addon_dir, "2026.09.11.1")
             package = os.path.join(root_dir, "update.zip")
-            write_package(package, "2026.09.11.2")
+            write_package(package, "2026.09.11.3")
 
             original_fetch_json = updater.fetch_json
             original_download_file = updater.download_file
             try:
-                updater.fetch_json = lambda url: [release("2026.09.11.2")]
+                updater.fetch_json = lambda url: [release("2026.09.11.3")]
 
                 def fake_download(_url, target):
                     os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -137,11 +150,11 @@ class UpdaterTests(unittest.TestCase):
 
                 updater.download_file = fake_download
 
-                result = updater.check_and_install("2026.09.11.1", addon_dir, profile_dir, now=1000, force=True)
+                result = updater.check_and_install("2026.09.11.1", addon_dir, profile_dir)
 
                 self.assertEqual(result["status"], "installed")
-                self.assertEqual(result["latest_version"], "2026.09.11.2")
-                self.assertEqual(updater.read_addon_version(addon_dir), "2026.09.11.2")
+                self.assertEqual(result["latest_version"], "2026.09.11.3")
+                self.assertEqual(updater.read_addon_version(addon_dir), "2026.09.11.3")
             finally:
                 updater.fetch_json = original_fetch_json
                 updater.download_file = original_download_file

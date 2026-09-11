@@ -2,7 +2,6 @@ import json
 import os
 import re
 import shutil
-import time
 import urllib.request
 import zipfile
 from pathlib import PurePosixPath
@@ -11,10 +10,9 @@ from xml.etree import ElementTree
 
 ADDON_ID = "plugin.video.mauswdr"
 RELEASES_API_URL = "https://api.github.com/repos/mojomedia1812/plugin.video.mauswdr/releases?per_page=10"
-CHECK_INTERVAL_SECONDS = 6 * 60 * 60
 STATE_FILE = "update-state.json"
 REQUEST_HEADERS = {
-    "User-Agent": "MausWDR/2026.09.11.2",
+    "User-Agent": "MausWDR/2026.09.11.3",
     "Accept": "application/vnd.github+json,application/json",
     "X-GitHub-Api-Version": "2022-11-28",
 }
@@ -115,8 +113,7 @@ def latest_release_info(releases):
     return max(candidates, key=lambda item: parse_version(item["version"]))
 
 
-def check_and_install(current_version, addon_dir, profile_dir, now=None, force=False):
-    now = time.time() if now is None else now
+def check_and_install(current_version, addon_dir, profile_dir):
     current_version = normalize_version(current_version) or read_addon_version(addon_dir)
     if not current_version:
         raise UpdateError("Current add-on version could not be determined")
@@ -125,11 +122,8 @@ def check_and_install(current_version, addon_dir, profile_dir, now=None, force=F
     if not profile_dir:
         raise UpdateError("Add-on profile directory is missing")
 
-    if not force and should_skip_check(profile_dir, current_version, now):
-        return {"status": "skipped", "current_version": current_version}
-
     release = latest_release_info(fetch_json(RELEASES_API_URL))
-    state = {"last_check": now, "current_version": current_version}
+    state = {"current_version": current_version}
     if not release:
         write_state(profile_dir, state)
         return {"status": "unavailable", "current_version": current_version}
@@ -179,14 +173,6 @@ def write_state(profile_dir, state):
     os.makedirs(profile_dir, exist_ok=True)
     with open(state_path(profile_dir), "w", encoding="utf-8") as handle:
         json.dump(state, handle, sort_keys=True)
-
-
-def should_skip_check(profile_dir, current_version, now):
-    state = read_state(profile_dir)
-    if state.get("current_version") != current_version:
-        return False
-    last_check = float(state.get("last_check") or 0)
-    return now - last_check < CHECK_INTERVAL_SECONDS
 
 
 def install_zip(zip_path, addon_dir, expected_version):
