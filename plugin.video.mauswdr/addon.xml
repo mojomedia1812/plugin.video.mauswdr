@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.mauswdr" name="MausWDR" version="2026.09.11.3" provider-name="m0j01812">
+<addon id="plugin.video.mauswdr" name="MausWDR" version="2026.09.24.1" provider-name="m0j01812">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="inputstream.adaptive" version="0.0.0" optional="true"/>
     </requires>
     <extension point="xbmc.python.pluginsource" library="default.py">
         <provides>video</provides>
@@ -9,8 +10,8 @@
     <extension point="xbmc.addon.metadata">
         <summary lang="de_DE">Videos der Sendung mit der Maus von wdrmaus.de in Kodi.</summary>
         <summary lang="en_GB">Videos from Die Sendung mit der Maus on wdrmaus.de in Kodi.</summary>
-        <description lang="de_DE">MausWDR listet Sachgeschichten, Lachgeschichten, Mausspots und Lieder von wdrmaus.de mit Kategorien, Neu-Ansichten und einer Jahresnavigation. Videos werden mit Vorschaubildern angezeigt und als WDR-HLS-Streams in Kodi abgespielt.</description>
-        <description lang="en_GB">MausWDR lists Sachgeschichten, Lachgeschichten, Mausspots and songs from wdrmaus.de with categories, new-item views and year navigation. Videos include thumbnails and play as WDR HLS streams in Kodi.</description>
+        <description lang="de_DE">MausWDR listet Sachgeschichten, Lachgeschichten, Mausspots und Lieder von wdrmaus.de mit Kategorien, Neu-Ansichten und einer Jahresnavigation. Videos werden mit Vorschaubildern angezeigt und auf Fire TV bevorzugt als MP4 oder sonst mit InputStream Adaptive als WDR-HLS-Streams abgespielt.</description>
+        <description lang="en_GB">MausWDR lists Sachgeschichten, Lachgeschichten, Mausspots and songs from wdrmaus.de with categories, new-item views and year navigation. Videos include thumbnails and play on Fire TV preferably as MP4 or otherwise as WDR HLS streams through InputStream Adaptive.</description>
         <disclaimer lang="de_DE">Inoffizielles Addon. Alle Inhalte, Marken und Rechte liegen bei den jeweiligen Rechteinhabern. Verfuegbarkeit und Abspielbarkeit haengen von wdrmaus.de und den WDR-Streamingdiensten ab.</disclaimer>
         <disclaimer lang="en_GB">Unofficial add-on. All content, trademarks and rights belong to their respective owners. Availability and playback depend on wdrmaus.de and the WDR streaming services.</disclaimer>
         <language>de</language>
@@ -18,9 +19,10 @@
         <license>MIT</license>
         <website>https://www.wdrmaus.de/</website>
         <source>https://github.com/mojomedia1812/plugin.video.mauswdr</source>
-        <news>2026.09.11.3 (2026-09-11)
-- Updatepruefung laeuft bei jedem Oeffnen der Addon-Startseite
-- Zeitintervall zwischen GitHub-Pruefungen entfernt</news>
+        <news>2026.09.24.1 (2026-09-24)
+- Fire-TV-Wiedergabe verbessert
+- MP4 wird bevorzugt, wenn WDR eine direkte MP4-Quelle anbietet
+- InputStream Adaptive wird fuer HLS automatisch nachinstalliert und genutzt</news>
         <assets>
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>

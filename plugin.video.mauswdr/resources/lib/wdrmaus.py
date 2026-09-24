@@ -15,7 +15,7 @@ YEARS_CACHE_VERSION = 2
 CACHE_DIR = ""
 
 REQUEST_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Kodi; plugin.video.mauswdr/2026.09.11.3)",
+    "User-Agent": "Mozilla/5.0 (Kodi; plugin.video.mauswdr/2026.09.24.1)",
     "Accept": "text/html,application/json,application/javascript,*/*;q=0.8",
     "Accept-Language": "de-DE,de;q=0.9,en;q=0.5",
 }
@@ -312,18 +312,18 @@ def resolve_video_stream(page_url):
         raise WdrMausError("No WDR media JavaScript URL found on {}".format(page_url))
 
     media = parse_media_jsonp(fetch_text(media_js_url))
-    stream_url = pick_stream_url(media)
-    if not stream_url:
+    stream = pick_media_resource(media)
+    if not stream:
         raise WdrMausError("No playable stream found for {}".format(page_url))
 
     tracker = media.get("trackerData", {})
     published = parse_air_time(tracker.get("trackerClipAirTime", "")) or metadata.get("published")
     return {
-        "url": normalize_url(stream_url),
+        "url": normalize_url(stream["url"]),
         "title": metadata.get("title") or tracker.get("trackerClipTitle") or "MausWDR",
         "plot": metadata.get("plot", ""),
         "thumb": metadata.get("thumb", ""),
-        "format": pick_media_format(media),
+        "format": stream.get("format", ""),
         "published": published,
         "year": year_from_published(published),
     }
@@ -403,27 +403,37 @@ def parse_media_jsonp(payload):
     return json.loads(payload[first : last + 1])
 
 
-def pick_stream_url(media):
+def pick_media_resource(media):
     resources = media.get("mediaResource", {})
+    for resource_name in ("alt", "dflt"):
+        resource = resources.get(resource_name) or {}
+        if not isinstance(resource, dict):
+            continue
+        stream_url = resource.get("videoURL")
+        if stream_url and resource.get("mediaFormat") == "mp4":
+            return {"url": stream_url, "format": "mp4"}
     for resource_name in ("dflt", "alt"):
         resource = resources.get(resource_name) or {}
+        if not isinstance(resource, dict):
+            continue
         stream_url = resource.get("videoURL")
         if stream_url:
-            return stream_url
+            return {"url": stream_url, "format": resource.get("mediaFormat", "")}
     for resource in resources.values():
-        if isinstance(resource, dict) and resource.get("videoURL"):
-            return resource["videoURL"]
-    return ""
+        if not isinstance(resource, dict) or not resource.get("videoURL"):
+            continue
+        return {"url": resource["videoURL"], "format": resource.get("mediaFormat", "")}
+    return {}
+
+
+def pick_stream_url(media):
+    resource = pick_media_resource(media)
+    return resource.get("url", "")
 
 
 def pick_media_format(media):
-    resources = media.get("mediaResource", {})
-    for resource_name in ("dflt", "alt"):
-        resource = resources.get(resource_name) or {}
-        media_format = resource.get("mediaFormat")
-        if media_format:
-            return media_format
-    return ""
+    resource = pick_media_resource(media)
+    return resource.get("format", "")
 
 
 def parse_air_time(value):

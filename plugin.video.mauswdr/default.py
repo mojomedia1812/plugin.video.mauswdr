@@ -15,6 +15,7 @@ ADDON_HANDLE = int(sys.argv[1])
 PLUGIN_URL = sys.argv[0]
 ADDON_NAME = "MausWDR"
 ADDON = xbmcaddon.Addon()
+INPUTSTREAM_ADAPTIVE = "inputstream.adaptive"
 
 
 def make_list_item(label="", path=None):
@@ -123,6 +124,48 @@ def show_info(message):
     )
 
 
+def execute_builtin(command, wait=False):
+    try:
+        xbmc.executebuiltin(command, wait)
+    except TypeError:
+        xbmc.executebuiltin(command)
+
+
+def addon_available(addon_id):
+    try:
+        xbmcaddon.Addon(addon_id)
+        return True
+    except Exception:
+        return False
+
+
+def ensure_addon(addon_id, label, notify=False):
+    if addon_available(addon_id):
+        try:
+            execute_builtin("EnableAddon({})".format(addon_id), True)
+        except Exception as exc:
+            wdrmaus.log_debug("Could not enable {}: {}".format(addon_id, exc))
+        return addon_available(addon_id)
+
+    if notify:
+        show_info("{} wird installiert".format(label))
+    try:
+        execute_builtin("InstallAddon({})".format(addon_id), True)
+    except Exception as exc:
+        wdrmaus.log_debug("Could not install {}: {}".format(addon_id, exc))
+    return addon_available(addon_id)
+
+
+def ensure_playback_dependencies(stream_format="", notify=False):
+    if stream_format != "hls":
+        return True
+    return ensure_addon(INPUTSTREAM_ADAPTIVE, "InputStream Adaptive", notify=notify)
+
+
+def check_dependencies():
+    ensure_addon(INPUTSTREAM_ADAPTIVE, "InputStream Adaptive", notify=False)
+
+
 def check_for_updates():
     try:
         result = updater.check_and_install(
@@ -136,7 +179,7 @@ def check_for_updates():
 
     if result.get("status") == "installed":
         try:
-            xbmc.executebuiltin("UpdateLocalAddons")
+            execute_builtin("UpdateLocalAddons")
         except Exception as exc:
             wdrmaus.log_debug("Could not scan local add-ons after update: {}".format(exc))
         show_info("Update {} installiert. Kodi bitte neu starten.".format(result["latest_version"]))
@@ -248,10 +291,22 @@ def play(url):
         xbmcplugin.setResolvedUrl(ADDON_HANDLE, False, make_list_item())
         return
 
+    stream_format = stream.get("format", "")
+    if not ensure_playback_dependencies(stream_format, notify=True):
+        show_error("InputStream Adaptive konnte nicht installiert werden")
+        xbmcplugin.setResolvedUrl(ADDON_HANDLE, False, make_list_item())
+        return
+
     item = make_list_item(label=stream.get("title", ADDON_NAME), path=stream["url"])
     item.setProperty("IsPlayable", "true")
-    item.setMimeType("application/vnd.apple.mpegurl")
     item.setContentLookup(False)
+    if stream_format == "hls":
+        item.setMimeType("application/vnd.apple.mpegurl")
+        item.setProperty("inputstream", INPUTSTREAM_ADAPTIVE)
+        item.setProperty("inputstreamaddon", INPUTSTREAM_ADAPTIVE)
+        item.setProperty("inputstream.adaptive.manifest_type", "hls")
+    elif stream_format == "mp4":
+        item.setMimeType("video/mp4")
     item.setInfo(
         "video",
         {
@@ -272,6 +327,7 @@ def main():
 
     if mode == "root":
         check_for_updates()
+        check_dependencies()
 
     if mode == "list":
         list_videos(

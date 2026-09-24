@@ -10,7 +10,8 @@ Entwickler: m0j01812
 - bietet die gewuenschten ALLE-/NEU-/Kategorie-Menues an
 - bietet eine Jahresansicht ueber alle vier Bereiche
 - loest pro Detailseite den WDR-On-Demand-JSONP-Endpunkt auf
-- spielt den HLS-Stream in Kodi ab
+- spielt direkte MP4-Streams ab, wenn WDR sie anbietet
+- nutzt fuer HLS-Streams `inputstream.adaptive` und versucht diese Kodi-Abhaengigkeit automatisch nachzuinstallieren
 - enthaelt Icon, Fanart, mehrsprachige Addon-Beschreibung und Disclaimer
 - prueft bei jedem Oeffnen der Addon-Startseite auf neuere GitHub-Releases und installiert passende Update-ZIPs automatisch
 
@@ -39,4 +40,4 @@ https://www.wdrmaus.de/filme/lachgeschichten/index.php5?filter=alle
 https://www.wdrmaus.de/filme/mausspots/index.php5?filter=alle
 https://www.wdrmaus.de/filme/lieder/index.php5?filter=alle
 
-Die Detailseiten enthalten ein `data-extension-ard`-Attribut, das auf einen WDR-On-Demand-Endpunkt verweist. Dieser liefert die eigentliche HLS-URL.
+Die Detailseiten enthalten ein `data-extension-ard`- oder `data-extension`-Attribut, das auf einen WDR-On-Demand-Endpunkt verweist. Dieser liefert die eigentlichen MP4- oder HLS-URLs.

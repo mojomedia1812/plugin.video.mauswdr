@@ -31,12 +31,24 @@ def load_default_module():
             self.kwargs = kwargs
             self.art = {}
             self.properties = {}
+            self.info = {}
+            self.mime_type = ""
+            self.content_lookup = None
 
         def setArt(self, art):
             self.art = art
 
         def setProperty(self, key, value):
             self.properties[key] = value
+
+        def setInfo(self, content_type, info):
+            self.info[content_type] = info
+
+        def setMimeType(self, mime_type):
+            self.mime_type = mime_type
+
+        def setContentLookup(self, enabled):
+            self.content_lookup = enabled
 
     xbmcgui.ListItem = StubListItem
     xbmcgui.Dialog = lambda: types.SimpleNamespace(notification=lambda *args, **kwargs: None)
@@ -149,6 +161,95 @@ class DefaultArtTests(unittest.TestCase):
             self.default.updater.check_and_install = original_check
             self.default.xbmc.executebuiltin = original_builtin
             self.default.ADDON = original_addon
+
+    def test_hls_dependency_install_is_triggered_when_missing(self):
+        calls = []
+        installed = {"inputstream.adaptive": False}
+        original_addon = self.default.xbmcaddon.Addon
+        original_builtin = self.default.xbmc.executebuiltin
+        try:
+            def fake_addon(addon_id=None):
+                if addon_id == "inputstream.adaptive" and not installed[addon_id]:
+                    raise RuntimeError("missing")
+                return types.SimpleNamespace(getAddonInfo=lambda key: "")
+
+            def fake_builtin(command, *args):
+                calls.append(command)
+                if command == "InstallAddon(inputstream.adaptive)":
+                    installed["inputstream.adaptive"] = True
+
+            self.default.xbmcaddon.Addon = fake_addon
+            self.default.xbmc.executebuiltin = fake_builtin
+
+            self.assertTrue(self.default.ensure_playback_dependencies("hls", notify=True))
+            self.assertIn("InstallAddon(inputstream.adaptive)", calls)
+        finally:
+            self.default.xbmcaddon.Addon = original_addon
+            self.default.xbmc.executebuiltin = original_builtin
+
+    def test_play_configures_inputstream_adaptive_for_hls(self):
+        calls = []
+        original_resolve = self.default.wdrmaus.resolve_video_stream
+        original_set_resolved = getattr(self.default.xbmcplugin, "setResolvedUrl", None)
+        original_addon = self.default.xbmcaddon.Addon
+        try:
+            self.default.wdrmaus.resolve_video_stream = lambda url: {
+                "url": "https://example.test/master.m3u8",
+                "title": "Abwasser",
+                "plot": "",
+                "thumb": "",
+                "format": "hls",
+            }
+            self.default.xbmcaddon.Addon = lambda addon_id=None: types.SimpleNamespace(getAddonInfo=lambda key: "")
+            self.default.xbmcplugin.setResolvedUrl = lambda handle, succeeded, item: calls.append(
+                (handle, succeeded, item)
+            )
+
+            self.default.play("https://www.wdrmaus.de/video.php5")
+
+            self.assertEqual(len(calls), 1)
+            self.assertTrue(calls[0][1])
+            item = calls[0][2]
+            self.assertEqual(item.mime_type, "application/vnd.apple.mpegurl")
+            self.assertEqual(item.properties["inputstream"], "inputstream.adaptive")
+            self.assertEqual(item.properties["inputstreamaddon"], "inputstream.adaptive")
+            self.assertEqual(item.properties["inputstream.adaptive.manifest_type"], "hls")
+            self.assertIs(item.content_lookup, False)
+        finally:
+            self.default.wdrmaus.resolve_video_stream = original_resolve
+            self.default.xbmcaddon.Addon = original_addon
+            if original_set_resolved is None:
+                delattr(self.default.xbmcplugin, "setResolvedUrl")
+            else:
+                self.default.xbmcplugin.setResolvedUrl = original_set_resolved
+
+    def test_play_sets_mp4_mime_without_inputstream(self):
+        calls = []
+        original_resolve = self.default.wdrmaus.resolve_video_stream
+        original_set_resolved = getattr(self.default.xbmcplugin, "setResolvedUrl", None)
+        try:
+            self.default.wdrmaus.resolve_video_stream = lambda url: {
+                "url": "https://example.test/video.mp4",
+                "title": "Abwasser",
+                "plot": "",
+                "thumb": "",
+                "format": "mp4",
+            }
+            self.default.xbmcplugin.setResolvedUrl = lambda handle, succeeded, item: calls.append(
+                (handle, succeeded, item)
+            )
+
+            self.default.play("https://www.wdrmaus.de/video.php5")
+
+            item = calls[0][2]
+            self.assertEqual(item.mime_type, "video/mp4")
+            self.assertNotIn("inputstream", item.properties)
+        finally:
+            self.default.wdrmaus.resolve_video_stream = original_resolve
+            if original_set_resolved is None:
+                delattr(self.default.xbmcplugin, "setResolvedUrl")
+            else:
+                self.default.xbmcplugin.setResolvedUrl = original_set_resolved
 
 
 if __name__ == "__main__":

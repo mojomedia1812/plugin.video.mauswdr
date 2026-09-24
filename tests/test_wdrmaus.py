@@ -136,6 +136,23 @@ class WdrMausParserTests(unittest.TestCase):
         self.assertEqual(wdrmaus.pick_media_format(media), "hls")
         self.assertEqual(wdrmaus.normalize_url(wdrmaus.pick_stream_url(media)), "https://example.test/master.m3u8")
 
+    def test_pick_stream_prefers_mp4_over_hls_master(self):
+        media = {
+            "mediaResource": {
+                "dflt": {
+                    "videoURL": "//example.test/master.m3u8",
+                    "mediaFormat": "hls",
+                },
+                "alt": {
+                    "videoURL": "//example.test/video.mp4",
+                    "mediaFormat": "mp4",
+                },
+            }
+        }
+
+        self.assertEqual(wdrmaus.pick_stream_url(media), "//example.test/video.mp4")
+        self.assertEqual(wdrmaus.pick_media_format(media), "mp4")
+
     def test_parse_air_time_and_year(self):
         published = wdrmaus.parse_air_time("04.05.2020 09:30")
 
