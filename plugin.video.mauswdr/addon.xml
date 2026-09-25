@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.mauswdr" name="MausWDR" version="2026.09.24.1" provider-name="m0j01812">
+<addon id="plugin.video.mauswdr" name="MausWDR" version="2026.09.25.1" provider-name="m0j01812">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="inputstream.adaptive" version="0.0.0" optional="true"/>
@@ -19,10 +19,10 @@
         <license>MIT</license>
         <website>https://www.wdrmaus.de/</website>
         <source>https://github.com/mojomedia1812/plugin.video.mauswdr</source>
-        <news>2026.09.24.1 (2026-09-24)
-- Fire-TV-Wiedergabe verbessert
-- MP4 wird bevorzugt, wenn WDR eine direkte MP4-Quelle anbietet
-- InputStream Adaptive wird fuer HLS automatisch nachinstalliert und genutzt</news>
+        <news>2026.09.25.1 (2026-09-25)
+- Aktivierungsdialog fuer InputStream Adaptive beim Navigieren entfernt
+- InputStream Adaptive wird nur noch bei HLS-Wiedergabe nachinstalliert, falls es fehlt
+- Bereits vorhandene Abhaengigkeiten werden nicht mehr pauschal aktiviert</news>
         <assets>
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>

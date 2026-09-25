@@ -187,6 +187,23 @@ class DefaultArtTests(unittest.TestCase):
             self.default.xbmcaddon.Addon = original_addon
             self.default.xbmc.executebuiltin = original_builtin
 
+    def test_existing_hls_dependency_is_not_reenabled(self):
+        calls = []
+        original_addon = self.default.xbmcaddon.Addon
+        original_builtin = self.default.xbmc.executebuiltin
+        try:
+            self.default.xbmcaddon.Addon = lambda addon_id=None: types.SimpleNamespace(
+                getAddonInfo=lambda key: ""
+            )
+            self.default.xbmc.executebuiltin = lambda command, *args: calls.append(command)
+
+            self.assertTrue(self.default.ensure_playback_dependencies("hls", notify=True))
+            self.assertNotIn("EnableAddon(inputstream.adaptive)", calls)
+            self.assertNotIn("InstallAddon(inputstream.adaptive)", calls)
+        finally:
+            self.default.xbmcaddon.Addon = original_addon
+            self.default.xbmc.executebuiltin = original_builtin
+
     def test_play_configures_inputstream_adaptive_for_hls(self):
         calls = []
         original_resolve = self.default.wdrmaus.resolve_video_stream

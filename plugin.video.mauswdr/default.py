@@ -141,11 +141,7 @@ def addon_available(addon_id):
 
 def ensure_addon(addon_id, label, notify=False):
     if addon_available(addon_id):
-        try:
-            execute_builtin("EnableAddon({})".format(addon_id), True)
-        except Exception as exc:
-            wdrmaus.log_debug("Could not enable {}: {}".format(addon_id, exc))
-        return addon_available(addon_id)
+        return True
 
     if notify:
         show_info("{} wird installiert".format(label))
@@ -160,10 +156,6 @@ def ensure_playback_dependencies(stream_format="", notify=False):
     if stream_format != "hls":
         return True
     return ensure_addon(INPUTSTREAM_ADAPTIVE, "InputStream Adaptive", notify=notify)
-
-
-def check_dependencies():
-    ensure_addon(INPUTSTREAM_ADAPTIVE, "InputStream Adaptive", notify=False)
 
 
 def check_for_updates():
@@ -327,7 +319,6 @@ def main():
 
     if mode == "root":
         check_for_updates()
-        check_dependencies()
 
     if mode == "list":
         list_videos(

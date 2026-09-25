@@ -12,7 +12,7 @@ ADDON_ID = "plugin.video.mauswdr"
 RELEASES_API_URL = "https://api.github.com/repos/mojomedia1812/plugin.video.mauswdr/releases?per_page=10"
 STATE_FILE = "update-state.json"
 REQUEST_HEADERS = {
-    "User-Agent": "MausWDR/2026.09.24.1",
+    "User-Agent": "MausWDR/2026.09.25.1",
     "Accept": "application/vnd.github+json,application/json",
     "X-GitHub-Api-Version": "2022-11-28",
 }

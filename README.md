@@ -11,7 +11,7 @@ Entwickler: m0j01812
 - bietet eine Jahresansicht ueber alle vier Bereiche
 - loest pro Detailseite den WDR-On-Demand-JSONP-Endpunkt auf
 - spielt direkte MP4-Streams ab, wenn WDR sie anbietet
-- nutzt fuer HLS-Streams `inputstream.adaptive` und versucht diese Kodi-Abhaengigkeit automatisch nachzuinstallieren
+- nutzt fuer HLS-Streams `inputstream.adaptive` und versucht diese Kodi-Abhaengigkeit erst beim HLS-Playback automatisch nachzuinstallieren
 - enthaelt Icon, Fanart, mehrsprachige Addon-Beschreibung und Disclaimer
 - prueft bei jedem Oeffnen der Addon-Startseite auf neuere GitHub-Releases und installiert passende Update-ZIPs automatisch
 
